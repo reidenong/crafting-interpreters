@@ -24,7 +24,7 @@ $(JLOX_JAR_NAME): $(JLOX_SRC_DIR)/*.java
 	@echo "" >> $(JLOX_MANIFEST_FILE)
 
 	@jar cvfm $@ $(JLOX_MANIFEST_FILE) -C $(JLOX_BUILD_ROOT) .
-	@rm $(JLOX_MANIFEST_FILE) # Clean up the temporary manifest file after JAR creation
+	@rm $(JLOX_MANIFEST_FILE)
 
 # Target to run the jlox interpreter
 jlox-run: $(JLOX_JAR_NAME)
