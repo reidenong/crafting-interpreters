@@ -7,6 +7,22 @@ import java.util.Map;
 
 import static jlox.lox.TokenType.*;
 
+/**
+ * Scans a source string into a sequence of tokens.
+ * 
+ * Methodology:
+ * For each character c, from L to R:
+ * 1. Figure out kind of token it is
+ * 2. Add it to token list
+ * 3. Consume the entire token
+ * 
+ * Order of token resolution:
+ * > If c is a known delimiter, add token and consume, continue
+ * > If c is a //, rest of line is a comment, continue
+ * > If c is a ", add String literal token and consume, continue
+ * > If c is a digit, add Number literal token and consume, continue
+ * > If c is a alphabet, it is an identifier, add token, consume, continue
+ */
 class Scanner {
   private final String source;
   private final List<Token> tokens = new ArrayList<>();
