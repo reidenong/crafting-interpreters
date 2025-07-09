@@ -12,7 +12,10 @@ import java.util.List;
  * Java implementation of a tree walk interpreter of Lox.
  */
 public class Lox {
+  private static final Interpreter interpreter = new Interpreter();
+
   static boolean hadError = false;
+  static boolean hadRuntimeError = false;
 
   // Entry point of the Lox interpreter
   public static void main(String[] args) throws IOException {
@@ -32,6 +35,8 @@ public class Lox {
     run(new String(bytes, Charset.defaultCharset()));
     if (hadError)
       System.exit(65);
+    if (hadRuntimeError)
+      System.exit(70);
   }
 
   // Open a Lox REPL
@@ -60,7 +65,7 @@ public class Lox {
     if (hadError)
       return;
 
-    System.out.println(new AstPrinter().print(expression));
+    interpreter.interpret(expression);
   }
 
   // Error Handling
@@ -83,5 +88,11 @@ public class Lox {
   private static void report(int line, String where, String message) {
     System.err.println(String.format("[line %s] Error %s: %s", line, where, message));
     hadError = true;
+  }
+
+  // Runtime error reporting code
+  static void runtimeError(RuntimeError error) {
+    System.err.println(String.format("%s [line %s]", error.getMessage(), error.token.line));
+    hadRuntimeError = true;
   }
 }
