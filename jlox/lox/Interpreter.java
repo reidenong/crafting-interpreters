@@ -40,6 +40,44 @@ class Interpreter implements Expr.Visitor<Object> {
     return null;
   }
 
+  // Evaluating a Binary Expr
+  @Override
+  public Object visitBinaryExpr(Expr.Binary expr) {
+    Object left = evaluate(expr.left);
+    Object right = evaluate(expr.right);
+
+    switch (expr.operator.type) {
+      case MINUS:
+        // Dynamic typing -> Typecasts at runtime
+        return (double)left - (double)right;
+      case SLASH:
+        return (double)left / (double)right;
+      case STAR:
+        return (double)left * (double)right;
+      case PLUS:
+        if (left isinstance double && right isinstance double) {
+          return (double)left + (double)right;
+        }
+        if (left isinstance String && right isinstance String) {
+          return (String)left + (String)right;
+        }
+      case GREATER:
+        return (double)left > (double)right;
+      case GREATER_EQUAL:
+        return (double)left >= (double)right;
+      case LESS:
+        return (double)left < (double)right;
+      case LESS_EQUAL:
+        return (double)left <= (double)right;
+      case BANG_EQUAL: return !isEqual(left, right);
+      case EQUAL_EQUAL: return isEqual(left, right);
+      break;
+    }
+
+    // Unreachable
+    return null;
+  }
+
   // Helper Methods
 
   // Evaluate subexpression
@@ -55,5 +93,14 @@ class Interpreter implements Expr.Visitor<Object> {
     if (object instanceof boolean)
       return (boolean) object;
     return true;
+  }
+
+  // Evaluate equality of two objects
+  private boolean isEqual(Object a, Object b) {
+    if (a == null && b == null)
+      return true;
+    if (a == null)
+      return false;
+    return a.equals(b);
   }
 }
