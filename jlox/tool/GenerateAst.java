@@ -14,12 +14,23 @@ public class GenerateAst {
 
     String outputDir = args[0];
 
+    /**
+     * defineAST defines an AST node.
+     * 
+     * defineAst(output_directory, class_name, Array<Subclasses>)
+     * 
+     * Each subclass is defined as Subclass_name : <Attr_class : attr_identifier> *
+     */
+
     defineAst(outputDir, "Expr", Arrays.asList(
-        // For each AST node, Name : Attributes
         "Binary   : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal  : Object value",
         "Unary    : Token operator, Expr right"));
+
+    defineAst(outputDir, "Stmt", Arrays.asList(
+        "Expression : Expr expression",
+        "Print : Expr expression"));
   }
 
   // Creates a AST object.

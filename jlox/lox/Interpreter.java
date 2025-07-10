@@ -1,5 +1,7 @@
 package jlox.lox;
 
+import java.util.List;
+
 /**
  * Interprets (the nodes in) an AST.
  * Acts as a concrete implementation for the Visitor interface.
@@ -8,12 +10,13 @@ package jlox.lox;
  * Here, Interpreter is a Visitor object that on accept() returns
  * the value of the Expr.
  */
-class Interpreter implements Expr.Visitor<Object> {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-  void interpret(Expr expression) {
+  void interpret(List<Stmt> statements) {
     try {
-      Object value = evaluate(expression);
-      System.out.println(stringify(value));
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
@@ -33,6 +36,27 @@ class Interpreter implements Expr.Visitor<Object> {
 
     return object.toString();
   }
+
+  // ======================
+  // Evaluating Statements
+  // ======================
+
+  @Override
+  public Void visitExpressionStmt(Stmt.Expression stmt) {
+    evalute(stmt.expression);
+    return null;
+  }
+
+  @Override
+  public Void visitPrintStmt(Stmt.Print stmt) {
+    Object value = evaluate(stmt.expression);
+    System.out.println(stringify(value));
+    return null;
+  }
+
+  // ======================
+  // Evaluating Expressions
+  // ======================
 
   // Evaluating a Literal.
   // Simply return the value
@@ -141,6 +165,11 @@ class Interpreter implements Expr.Visitor<Object> {
   // Evaluate subexpression
   private Object evaluate(Expr expr) {
     return expr.accept(this);
+  }
+
+  // Execute statement
+  private void execute(Stmt stmt) {
+    stmt.accept(this);
   }
 
   // Evaluate Truthy-ness of an Object

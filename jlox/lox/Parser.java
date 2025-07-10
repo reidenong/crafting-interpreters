@@ -1,5 +1,6 @@
 package jlox.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static jlox.lox.TokenType.*;
@@ -20,16 +21,51 @@ class Parser {
   private static class ParseError extends RuntimeException {
   }
 
-  Expr parse() {
-    try {
-      return expression();
-    } catch (ParseError e) {
-      return null;
+  /**
+   * Parses a list of tokens into a list of statements.
+   * 
+   * @return A List of statements that make up the source
+   */
+  List<Stmt> parse() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!isAtEnd()) {
+      statements.add(statement());
     }
+    return statements;
+  }
+
+  /**
+   * Statement Grammar
+   * 
+   * program → statement* EOF ;
+   * 
+   * statement → exprStmt | printStmt ;
+   * 
+   * printStmt → expression ";" ;
+   * exprStmt → "print" expression ";" ;
+   */
+
+  // Parses a statement at [current]
+  private Stmt statement() {
+    if (match(PRINT))
+      return printStatement();
+    return expressionStatement();
+  }
+
+  private Stmt printStatement() {
+    Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Print(value);
+  }
+
+  private Stmt expressionStatement() {
+    Expr expr = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Expression(expr);
   }
 
   /*
-   * Grammar
+   * Expression Grammar
    *
    * expression → equality ;
    * equality → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -118,7 +154,9 @@ class Parser {
     throw error(peek(), "Expect expression.");
   }
 
+  // ==============
   // Parsing utils.
+  // ==============
 
   // Consume current token if present, else throw error
   private Token consume(TokenType type, String message) {
