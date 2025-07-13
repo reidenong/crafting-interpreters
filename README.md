@@ -7,16 +7,17 @@ Lox is implemented in the following flavors:
 
 # jLox
 Setup
-1. Generating the AST source code.
-```
-javac jlox/tool/GenerateAst.java
-java jlox.tool.GenerateAst ./jlox/lox/
-```
-2. Building `jlox`
+1. Building `jlox`
 ```
 make jlox
 ```
-3. Run the `jlox` REPL
+2. Run the `jlox` REPL
 ```
 make jlox-run
+```
+
+Under the hood, there is a need to generate the AST:
+```
+javac jlox/tool/GenerateAst.java
+java jlox.tool.GenerateAst ./jlox/lox/
 ```

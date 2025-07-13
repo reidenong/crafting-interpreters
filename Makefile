@@ -5,6 +5,7 @@ CLEAN_TARGETS :=
 # JLOX (Java Implementation)
 # =========================================================================
 JLOX_SRC_DIR := jlox/lox
+JLOX_TOOL_DIR := jlox/tool
 JLOX_MAIN_CLASS := jlox.lox.Lox
 JLOX_BUILD_ROOT := $(BUILD_DIR)
 JLOX_JAR_NAME := $(JLOX_BUILD_ROOT)/jlox.jar
@@ -18,6 +19,10 @@ jlox: $(JLOX_JAR_NAME)
 
 $(JLOX_JAR_NAME): $(JLOX_SRC_DIR)/*.java
 	@mkdir -p $(JLOX_BUILD_ROOT)
+
+	@javac jlox/tool/GenerateAst.java
+	@java jlox.tool.GenerateAst ./jlox/lox/
+
 	@javac -d $(JLOX_BUILD_ROOT) $(JLOX_SRC_DIR)/*.java
 
 	@echo "Main-Class: $(JLOX_MAIN_CLASS)" > $(JLOX_MANIFEST_FILE)
