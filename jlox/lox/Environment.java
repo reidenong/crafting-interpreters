@@ -7,14 +7,33 @@ import java.util.Map;
  * Stores the bindings that associate variables to values.
  */
 class Environment {
-  // Global variables
+  final Environment enclosing; // Reference to parent environment.
   private final Map<String, Object> values = new HashMap<>();
+
+  // Constructors for making a new environment.
+
+  // No envlosing environment for global scope.
+  Environment() {
+    enclosing = null;
+  }
+
+  Environment(Environment enclosing) {
+    this.enclosing = enclosing;
+  }
+
+  // Methods to mutate environment.
 
   void assign(Token name, Object value) {
     if (values.containsKey(name.lexeme)) {
       values.put(name.lexeme, value);
       return;
     }
+
+    if (enclosing != null) {
+      enclosing.assign(name, value);
+      return;
+    }
+
     throw new RuntimeError(name, String.format("Undefined variable '%s'.", name));
   }
 
@@ -25,6 +44,11 @@ class Environment {
   Object get(Token name) {
     if (values.containsKey(name.lexeme))
       return values.get(name.lexeme);
+
+    // Check enclosing scope.
+    if (enclosing != null)
+      return enclosing.get(name);
+
     throw new RuntimeError(name, String.format("Undefined variable %s.", name.lexeme));
   }
 }
