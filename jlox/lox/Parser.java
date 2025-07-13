@@ -29,7 +29,7 @@ class Parser {
   List<Stmt> parse() {
     List<Stmt> statements = new ArrayList<>();
     while (!isAtEnd()) {
-      statements.add(statement());
+      statements.add(declaration());
     }
     return statements;
   }
@@ -37,13 +37,42 @@ class Parser {
   /**
    * Statement Grammar
    * 
-   * program → statement* EOF ;
+   * program → declaration* EOF ;
+   * 
+   * declaration → varDecl | statement ;
    * 
    * statement → exprStmt | printStmt ;
+   * 
+   * 
+   * varDecl → "var" IDENTIFIER ( "=" expression)? ";" ;
    * 
    * printStmt → expression ";" ;
    * exprStmt → "print" expression ";" ;
    */
+
+  // Parses a declaration at [current]
+  private Stmt declaration() {
+    try {
+      if (match(VAR))
+        return varDeclaration();
+      return statement();
+    } catch (ParseError error) {
+      synchronize();
+      return null;
+    }
+  }
+
+  private Stmt varDeclaration() {
+    Token name = consume(IDENTIFIER, "Expect variable name.");
+
+    Expr initializer = null;
+    if (match(EQUAL)) {
+      initializer = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after variable declaration.");
+    return new Stmt.Var(name, initializer);
+  }
 
   // Parses a statement at [current]
   private Stmt statement() {
@@ -73,7 +102,8 @@ class Parser {
    * term → factor ( ( "-" | "+" ) factor )* ;
    * factor → unary ( ( "/" | "*" ) unary )* ;
    * unary → ( "!" | "-" ) unary | primary ;
-   * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+   * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+   * | IDENTIFIER;
    */
 
   private Expr expression() {
@@ -146,6 +176,10 @@ class Parser {
     if (match(NUMBER, STRING))
       return new Expr.Literal(previous().literal);
 
+    // Variable expression,, ie. getting value of a variable
+    if (match(IDENTIFIER))
+      return new Expr.Variable(previous());
+
     if (match(LEFT_PAREN)) {
       Expr expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -165,7 +199,7 @@ class Parser {
     throw error(peek(), message);
   }
 
-  // Check to see if current token has any of the given types.
+  // Check to see if current token has any of the given types. Consumes if yes.
   private boolean match(TokenType... types) {
     for (TokenType type : types) {
       if (check(type)) {
