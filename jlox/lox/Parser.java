@@ -96,7 +96,8 @@ class Parser {
   /*
    * Expression Grammar
    *
-   * expression → equality ;
+   * expression → assignment ;
+   * assignment → IDENTIFIER "=" assignment | equality ;
    * equality → comparison ( ( "!=" | "==" ) comparison )* ;
    * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
    * term → factor ( ( "-" | "+" ) factor )* ;
@@ -107,7 +108,30 @@ class Parser {
    */
 
   private Expr expression() {
-    return equality();
+    return assignment();
+  }
+
+  // Assignment is right associative.
+  // We parse LHS as a higher precedence expression, and then recursively evalute
+  // the RHS for value. At the end of the parsing, we then check if l-value is a
+  // valid assignment target and then assign it the relevant r-value (from
+  // recursive evaluation).
+  private Expr assignment() {
+    Expr expr = equality(); // Evaluate LHS (into hopefully a identifier)
+
+    if (match(EQUAL)) {
+      Token equals = previous();
+      Expr value = assignment(); // Evaluate RHS for value recursively
+
+      if (expr instanceof Expr.Variable) { // Update environment
+        Token name = ((Expr.Variable) expr).name;
+        return new Expr.Assign(name, value);
+      }
+
+      error(equals, "Invalid assignment target.");
+    }
+
+    return expr; // Propagate r-value
   }
 
   private Expr equality() {

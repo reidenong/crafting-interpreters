@@ -5,13 +5,18 @@ class AstPrinter implements Expr.Visitor<String> {
     return expr.accept(this);
   }
 
-  // Dummy implementations to prevent errors
+  // Base implementations of how to print each expression type.
+
+  @Override
+  public String visitAssignExpr(Expr.Assign expr) {
+    return String.format("(%s = %s)", expr.name.lexeme, expr.value);
+  }
+
   @Override
   public String visitVariableExpr(Expr.Variable expr) {
     return String.format("(var %s)", expr.name.lexeme);
   }
 
-  // Base implementations of how to print each expression type.
   @Override
   public String visitBinaryExpr(Expr.Binary expr) {
     return parenthesize(expr.operator.lexeme, expr.left, expr.right);
