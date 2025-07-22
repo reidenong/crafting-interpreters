@@ -106,6 +106,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     return expr.value;
   }
 
+  // Evaluating a OR expression
+  @Override
+  public Object visitLogicalExpr(Expr.Logical expr) {
+    Object left = evaluate(expr.left);
+
+    if (expr.operator.type == TokenType.OR) {
+      // Short circuit if left is truthy
+      if (isTruthy(left))
+        return left;
+    } else {
+      // Short circuit if left is not truthy
+      if (!isTruthy(left))
+        return left;
+    }
+
+    return evaluate(expr.right);
+  }
+
   // Evaluating a grouping "()"
   // Send the expression back into the visitor implementation
   @Override

@@ -132,7 +132,11 @@ class Parser {
    *
    * expression → assignment ;
    * 
-   * assignment → IDENTIFIER "=" assignment | equality ;
+   * assignment → IDENTIFIER "=" assignment | logic_or ;
+   * 
+   * logic_or → logic_and ("or" logic_and)* ;
+   * 
+   * logic_and → equality ("and" equality)* ;
    * 
    * equality → comparison ( ( "!=" | "==" ) comparison )* ;
    * 
@@ -158,7 +162,7 @@ class Parser {
   // valid assignment target and then assign it the relevant r-value (from
   // recursive evaluation).
   private Expr assignment() {
-    Expr expr = equality(); // Evaluate LHS (into hopefully a identifier)
+    Expr expr = or(); // Evaluate LHS (into hopefully a identifier)
 
     if (match(EQUAL)) {
       Token equals = previous();
@@ -173,6 +177,32 @@ class Parser {
     }
 
     return expr; // Propagate r-value
+  }
+
+  // Parse a statement at the logical OR.
+  private Expr or() {
+    Expr expr = and();
+
+    while (match(OR)) {
+      Token operator = previous();
+      Expr right = and();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+
+    return expr;
+  }
+
+  // Parse a statement at the logical AND level.
+  private Expr and() {
+    Expr expr = equality();
+
+    while (match(AND)) {
+      Token operator = previous();
+      Expr right = equality();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+
+    return expr;
   }
 
   private Expr equality() {
