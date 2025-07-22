@@ -1,6 +1,7 @@
 package jlox.lox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static jlox.lox.TokenType.*;
@@ -43,10 +44,13 @@ class Parser {
    * 
    * declaration → varDecl | statement ;
    * 
-   * statement → exprStmt | ifStmt | printStmt | whileStmt | block ;
+   * statement → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
    * 
    * block → "{" declaration* "}" ;
    * 
+   * forStmt → "for" "(" ( varDecl | exprStmt | ";" )
+   * expression? ";"
+   * expression ")" statement ;
    * 
    * ifStmt → "if" "(" expression ")" statement ("else" statement)? ;
    * 
@@ -82,6 +86,8 @@ class Parser {
 
   // Parses a statement at [current]
   private Stmt statement() {
+    if (match(FOR))
+      return forStatement();
     if (match(IF))
       return ifStatement();
     if (match(PRINT))
@@ -102,6 +108,57 @@ class Parser {
 
     consume(RIGHT_BRACE, "Expect '}' after block.");
     return statements;
+  }
+
+  // Implement parsing of for-loops as syntactic sugar of a while loop
+  // We take in the init, condition, increment and body of the for loop, and then
+  // step by step we convert the for loop syntax into a while loop using scoping
+  // with blocks.
+  private Stmt forStatement() {
+
+    // Extract initializer
+    consume(LEFT_PAREN, "Expect '(' after 'for'.");
+    Stmt initializer;
+    if (match(SEMICOLON)) {
+      initializer = null;
+    } else if (match(VAR)) {
+      initializer = varDeclaration();
+    } else {
+      initializer = expressionStatement();
+    }
+
+    // Extract condition
+    Expr condition = null;
+    if (!check(SEMICOLON))
+      condition = expression();
+    consume(SEMICOLON, "Expect ';' after loop condition");
+
+    // Extract increment
+    Expr increment = null;
+    if (!check(RIGHT_PAREN))
+      increment = expression();
+    consume(RIGHT_PAREN, "Expect ')' after for clauses");
+
+    // Extract body
+    Stmt body = statement();
+
+    // Integrate increment at the end of the body.
+    if (increment != null) {
+      body = new Stmt.Block(
+          Arrays.asList(body, new Stmt.Expression(increment)));
+    }
+
+    // Integrate condition as a while loop with the body.
+    if (condition == null)
+      condition = new Expr.Literal(true);
+    body = new Stmt.While(condition, body);
+
+    // Add initializer to run before the body.
+    if (initializer != null) {
+      body = new Stmt.Block(Arrays.asList(initializer, body));
+    }
+
+    return body;
   }
 
   private Stmt ifStatement() {
