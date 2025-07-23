@@ -1,5 +1,6 @@
 package jlox.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,7 +12,29 @@ import java.util.List;
  * the value of the Expr.
  */
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
-  private Environment environment = new Environment();
+  final Environment globals = new Environment();
+  private Environment environment = globals;
+
+  Interpreter() {
+    // Stuff native clock function into globals.
+    // Java Anonymous class that implements LoxCallable.
+    globals.define("clock", new LoxCallable() {
+      @Override
+      public int arity() {
+        return 0;
+      }
+
+      @Override
+      public Object call(Interpreter interpreter, List<Object> arguments) {
+        return (double) System.currentTimeMillis() / 1000.0;
+      }
+
+      @Override
+      public String toString() {
+        return "<native fn>";
+      }
+    });
+  }
 
   void interpret(List<Stmt> statements) {
     try {
@@ -156,6 +179,32 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // Unreachable
     return null;
+  }
+
+  // Evaluating a Call expression
+  @Override
+  public Object visitCallExpr(Expr.Call expr) {
+    Object callee = evaluate(expr.callee);
+
+    List<Object> arguments = new ArrayList<>();
+    for (Expr argument : expr.arguments) {
+      arguments.add(evaluate(argument));
+    }
+
+    // Cast function to LoxCallable and call
+    if (!(callee instanceof LoxCallable)) {
+      throw new RuntimeError(expr.paren,
+          "Can only call functions and classes.");
+    }
+
+    LoxCallable function = (LoxCallable) callee;
+
+    // Check function arity is strictly equal.
+    if (arguments.size() != function.arity()) {
+      throw new RuntimeError(expr.paren,
+          String.format("Expected %s arguments but got %s.", function.arity(), arguments.size()));
+    }
+    return function.call(this, arguments);
   }
 
   // Evaluating a Binary Expr
