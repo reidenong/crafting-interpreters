@@ -42,7 +42,7 @@ class Parser {
    * 
    * program → declaration* EOF ;
    * 
-   * declaration → varDecl | statement ;
+   * declaration → funDecl | varDecl | statement ;
    * 
    * statement → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
    * 
@@ -54,6 +54,10 @@ class Parser {
    * 
    * ifStmt → "if" "(" expression ")" statement ("else" statement)? ;
    * 
+   * funDecl → "fun" function ;
+   * function → IDENTIFIER "(" parameters? ")" block ;
+   * parameters → IDENTIFIER ( "," IDENTIFIER )* ;
+   * 
    * varDecl → "var" IDENTIFIER ( "=" expression)? ";" ;
    * 
    * printStmt → expression ";" ;
@@ -63,6 +67,8 @@ class Parser {
   // Parses a declaration at [current]
   private Stmt declaration() {
     try {
+      if (match(FUN))
+        return function("function");
       if (match(VAR))
         return varDeclaration();
       return statement();
@@ -70,6 +76,26 @@ class Parser {
       synchronize();
       return null;
     }
+  }
+
+  private Stmt.Function function(String kind) {
+    Token name = consume(IDENTIFIER, String.format("Expect %s name.", kind));
+    consume(LEFT_PAREN, String.format("Expect '(' after %s name.", kind));
+    List<Token> parameters = new ArrayList<>();
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255) {
+          error(peek(), "Can't have more than 255 parameters.");
+        }
+
+        parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+      } while (match(COMMA));
+    }
+    consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+    consume(LEFT_BRACE, String.format("Expect '{' before %s body."));
+    List<Stmt> body = block();
+    return new Stmt.Function(name, parameters, body);
   }
 
   private Stmt varDeclaration() {

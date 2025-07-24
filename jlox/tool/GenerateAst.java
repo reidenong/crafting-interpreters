@@ -38,7 +38,8 @@ public class GenerateAst {
         "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
         "Print      : Expr expression",
         "While      : Expr condition, Stmt body",
-        "Var        : Token name, Expr initializer"));
+        "Var        : Token name, Expr initializer",
+        "Function   : Token name, List<Token> params, List<Stmt> body"));
   }
 
   // Creates a AST object.
