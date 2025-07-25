@@ -44,13 +44,16 @@ class Parser {
    * 
    * declaration → funDecl | varDecl | statement ;
    * 
-   * statement → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+   * statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt
+   * | block ;
    * 
    * block → "{" declaration* "}" ;
    * 
    * forStmt → "for" "(" ( varDecl | exprStmt | ";" )
    * expression? ";"
    * expression ")" statement ;
+   * 
+   * returnStmt → "return" expression? ";" ;
    * 
    * ifStmt → "if" "(" expression ")" statement ("else" statement)? ;
    * 
@@ -118,6 +121,8 @@ class Parser {
       return ifStatement();
     if (match(PRINT))
       return printStatement();
+    if (match(RETURN))
+      return returnStatement();
     if (match(WHILE))
       return whileStatement();
     if (match(LEFT_BRACE))
@@ -204,6 +209,18 @@ class Parser {
     Expr value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
+  }
+
+  private Stmt returnStatement() {
+    Token keyword = previous();
+    Expr value = null;
+
+    // Check if we are returning an expression.
+    if (!check(SEMICOLON))
+      value = expression();
+
+    consume(SEMICOLON, "Expect ';' after return value.");
+    return new Stmt.Return(keyword, value);
   }
 
   private Stmt whileStatement() {

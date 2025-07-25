@@ -30,8 +30,20 @@ class LoxFunction implements LoxCallable {
       environment.define(declaration.params.get(i).lexeme, arguments.get(i));
     }
 
-    // Run the new environment scope.
-    interpreter.executeBlock(declaration.body, environment);
+    /*
+     * Execute the function in its own scope (Environment).
+     * 
+     * Use exceptions as return control-flow:
+     * When we catch a return exception, pull out of the value and make the return
+     * value from call().
+     * 
+     * if there is no return statement, implicitly return null.
+     */
+    try {
+      interpreter.executeBlock(declaration.body, environment);
+    } catch (Return returnValue) {
+      return returnValue.value;
+    }
     return null;
   }
 
