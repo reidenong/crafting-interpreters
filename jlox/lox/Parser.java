@@ -96,7 +96,7 @@ class Parser {
     }
     consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-    consume(LEFT_BRACE, String.format("Expect '{' before %s body."));
+    consume(LEFT_BRACE, String.format("Expect '{' before %s body.", kind));
     List<Stmt> body = block();
     return new Stmt.Function(name, parameters, body);
   }

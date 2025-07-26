@@ -32,8 +32,12 @@ $(JLOX_JAR_NAME): $(JLOX_SRC_DIR)/*.java
 	@rm $(JLOX_MANIFEST_FILE)
 
 # Target to run the jlox interpreter
-jlox-run: $(JLOX_JAR_NAME)
-	@java -jar $(JLOX_JAR_NAME) $(args)
+jlox-run:
+	@if [ -n "$(file)" ]; then \
+		java -jar $(JLOX_JAR_NAME) "$(file)"; \
+	else \
+		java -jar $(JLOX_JAR_NAME); \
+	fi
 
 # Target to clean jlox build artifacts
 jlox-clean:
