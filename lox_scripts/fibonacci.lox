@@ -1,3 +1,5 @@
+// This is a basic script that prints out the first fibonacci numbers.
+
 fun fib(n) {
     if (n <= 1) return n;
     return fib(n - 1) + fib(n - 2);
