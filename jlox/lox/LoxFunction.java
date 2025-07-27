@@ -49,6 +49,14 @@ class LoxFunction implements LoxCallable {
     return null;
   }
 
+  // Bind the LoxInstance to the method, when method is called, it becomes the
+  // parent of the method body's environment.
+  LoxFunction bind(LoxInstance instance) {
+    Environment environment = new Environment(closure);
+    environment.define("this", instance);
+    return new LoxFunction(declaration, environment);
+  }
+
   @Override
   public int arity() {
     return declaration.params.size();

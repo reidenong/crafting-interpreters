@@ -438,6 +438,9 @@ class Parser {
     if (match(NUMBER, STRING))
       return new Expr.Literal(previous().literal);
 
+    if (match(THIS))
+      return new Expr.This(previous());
+
     // Variable expression,, ie. getting value of a variable
     if (match(IDENTIFIER))
       return new Expr.Variable(previous());

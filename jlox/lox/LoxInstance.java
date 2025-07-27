@@ -21,7 +21,8 @@ class LoxInstance {
 
     LoxFunction method = klass.findMethod(name.lexeme);
     if (method != null)
-      return method;
+      // Return the method with a bound LoxInstance which it is being called from.
+      return method.bind(this);
 
     throw new RuntimeError(name, String.format("Undefined property %s.", name.lexeme));
   }

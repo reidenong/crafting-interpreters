@@ -229,6 +229,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     return null;
   }
 
+  // <this> is already stored as a variable in the environment. look it up as you
+  // would for any other ordinary variable.
+  @Override
+  public Object visitThisExpr(Expr.This expr) {
+    return lookUpVariable(expr.keyword, expr);
+  }
+
   // Evaluating a Set expression
   @Override
   public Object visitSetExpr(Expr.Set expr) {
