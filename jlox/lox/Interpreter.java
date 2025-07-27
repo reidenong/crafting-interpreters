@@ -84,6 +84,17 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     return null;
   }
 
+  /*
+   * Interpreting Class declaration.
+   */
+  @Override
+  public Void visitClassStmt(Stmt.Class stmt) {
+    environment.define(stmt.name.lexeme, null); // Define the class name itself.
+    LoxClass klass = new LoxClass(stmt.name.lexeme);
+    environment.assign(stmt.name, klass); // Add the class object to the environment.
+    return null;
+  }
+
   @Override
   public Void visitVarStmt(Stmt.Var stmt) {
     Object value = null;
