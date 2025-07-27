@@ -30,6 +30,7 @@ public class GenerateAst {
         "Logical  : Expr left, Token operator, Expr right",
         "Unary    : Token operator, Expr right",
         "Call     : Expr callee, Token paren, List<Expr> arguments",
+        "Get      : Expr object, Token name",
         "Variable : Token name"));
 
     defineAst(outputDir, "Stmt", Arrays.asList(

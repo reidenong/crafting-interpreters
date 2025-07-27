@@ -276,7 +276,8 @@ class Parser {
    * 
    * unary → ( "!" | "-" ) unary | call ;
    * 
-   * call → primary ( "(" arguments? ")" )* ;
+   * // Includes calls and property access
+   * call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
    * arguments → expression ( "," expression )* ;
    * 
    * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
@@ -395,6 +396,9 @@ class Parser {
     while (true) {
       if (match(LEFT_PAREN)) {
         expr = finishCall(expr);
+      } else if (match(DOT)) {
+        Token name = consume(IDENTIFIER, "Expect property name after '.'");
+        expr = new Expr.Get(expr, name);
       } else {
         break;
       }

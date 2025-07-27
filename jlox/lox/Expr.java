@@ -11,6 +11,7 @@ abstract class Expr {
     R visitLogicalExpr(Logical expr);
     R visitUnaryExpr(Unary expr);
     R visitCallExpr(Call expr);
+    R visitGetExpr(Get expr);
     R visitVariableExpr(Variable expr);
   }
   static class Assign extends Expr {
@@ -112,6 +113,20 @@ abstract class Expr {
     final Expr callee;
     final Token paren;
     final List<Expr> arguments;
+  }
+  static class Get extends Expr {
+    Get(Expr object, Token name) {
+      this.object = object;
+      this.name = name;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitGetExpr(this);
+    }
+
+    final Expr object;
+    final Token name;
   }
   static class Variable extends Expr {
     Variable(Token name) {
