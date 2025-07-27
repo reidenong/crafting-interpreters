@@ -41,6 +41,9 @@ class Environment {
     values.put(name, value);
   }
 
+  /*
+   * Get the [distance]-th ancestor environment.
+   */
   Environment ancestor(int distance) {
     Environment environment = this;
     for (int i = 0; i < distance; i++) {
