@@ -217,6 +217,15 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     declare(stmt.name);
     define(stmt.name);
 
+    // Check for a inheritance cycle, eg. class Oops < Oops {}.
+    if (stmt.superclass != null && stmt.name.lexeme.equals(stmt.superclass.name.lexeme)) {
+      Lox.error(stmt.superclass.name, "A class can't inherit from itself.");
+    }
+
+    if (stmt.superclass != null) {
+      resolve(stmt.superclass);
+    }
+
     // Whenever a <this> is encountered, it resolves to a local variable defined in
     // an implicit scopejust outside the block for the method body.
     beginScope();
