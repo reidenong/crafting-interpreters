@@ -204,6 +204,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   @Override
+  public Void visitSuperExpr(Expr.Super expr) {
+    // We can resolve the expression itself with "super" defined in a scope chain.
+    resolveLocal(expr, expr.keyword);
+    return null;
+  }
+
+  @Override
   public Void visitGetExpr(Expr.Get expr) {
     resolve(expr.object);
     return null;
@@ -226,6 +233,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       resolve(stmt.superclass);
     }
 
+    // If the class declaration has a superclass, create a new scope surrounding all
+    // of its methods with the superclass bound to 'super'.
+    if (stmt.superclass != null) {
+      beginScope();
+      scopes.peek().put("super", true);
+    }
+
     // Whenever a <this> is encountered, it resolves to a local variable defined in
     // an implicit scopejust outside the block for the method body.
     beginScope();
@@ -239,6 +253,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     endScope();
     currentClass = enclosingClass;
+
+    if (stmt.superclass != null)
+      endScope();
 
     return null;
   }
