@@ -3,5 +3,8 @@
         "editor.defaultFormatter": "redhat.java",
         "editor.tabSize": 2,
         "editor.insertSpaces": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
     }
 }
