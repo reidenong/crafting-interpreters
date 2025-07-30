@@ -1,5 +1,6 @@
 # pylox/__init__.py
 
+from .main import Lox
 from .scanner import Scanner
 from .token import Token
 from .token_type import TokenType
