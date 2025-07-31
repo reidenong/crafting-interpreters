@@ -79,3 +79,22 @@ CHAR_TOKEN_MAP: Final[dict[str, TT | dict[str, TT]]] = {
     '<': {'=': TT.LESS_EQUAL, '': TT.LESS},
     '>': {'=': TT.GREATER_EQUAL, '': TT.GREATER},
 }
+
+KEYWORD_TOKEN_MAP: Final[dict[str, TT]] = {
+    'and': TT.AND,
+    'class': TT.CLASS,
+    'else': TT.ELSE,
+    'false': TT.FALSE,
+    'for': TT.FOR,
+    'fun': TT.FUN,
+    'if': TT.IF,
+    'nil': TT.NIL,
+    'or': TT.OR,
+    'print': TT.PRINT,
+    'return': TT.RETURN,
+    'super': TT.SUPER,
+    'this': TT.THIS,
+    'true': TT.TRUE,
+    'var': TT.VAR,
+    'while': TT.WHILE,
+}

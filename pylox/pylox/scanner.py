@@ -1,7 +1,7 @@
 # pylox/scanner.py
 from pylox import Lox, Token
 from pylox import TokenType as TT
-from pylox.token_type import CHAR_TOKEN_MAP
+from pylox.token_type import CHAR_TOKEN_MAP, KEYWORD_TOKEN_MAP
 
 
 class Scanner:
@@ -60,7 +60,23 @@ class Scanner:
             case _ if c.isdigit():
                 self.number()
 
+            case _ if c.isalpha():
+                self.identifier()
+
         Lox.error(self.line, 'Unexpected char.')
+
+    def identifier(self) -> None:
+        while not self.is_at_end() and (
+            self.peek().isalpha() or self.peek() == '_'
+        ):
+            self.advance()
+
+        text = self.source[self.start : self.curr]
+        token_type = KEYWORD_TOKEN_MAP.get(text)
+        if token_type:
+            self.add_token(token_type)
+        else:
+            self.add_token(TT.IDENTIFIER)
 
     def number(self) -> None:
         while not self.is_at_end() and self.peek().isdigit():
