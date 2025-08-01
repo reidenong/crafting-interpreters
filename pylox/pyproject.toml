@@ -12,6 +12,7 @@ warn_unused_configs = true
 show_error_codes = true
 pretty = true
 exclude = ["tests/helpers/"]
+mypy_path = "pylox"
 
 [tool.ruff]
 line-length = 80
@@ -23,4 +24,4 @@ quote-style = "single"
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q"
-testpaths = ["tests"]
+testpaths = ["test"]

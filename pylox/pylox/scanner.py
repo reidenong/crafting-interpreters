@@ -1,6 +1,6 @@
 # pylox/scanner.py
 from .error_handler import ErrorHandler
-from .token import Token
+from .lox_token import Token
 from .token_type import CHAR_TOKEN_MAP, KEYWORD_TOKEN_MAP
 from .token_type import TokenType as TT
 

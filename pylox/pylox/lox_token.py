@@ -1,4 +1,4 @@
-# pylox/token.py
+# pylox/lox_token.py
 
 from dataclasses import dataclass
 from typing import Any
