@@ -1,7 +1,5 @@
 # test/scanner_test.py
 
-import pytest
-
 from pylox.error_handler import ErrorHandler  # type: ignore
 from pylox.lox_token import Token  # type: ignore
 from pylox.scanner import Scanner  # type: ignore
