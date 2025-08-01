@@ -1,12 +1,13 @@
 # pylox/main.py
 import sys
 
-from pylox import Scanner
+from pylox.error_handler import ErrorHandler
+from pylox.scanner import Scanner
 
 
 class Lox:
     def __init__(self) -> None:
-        self.had_error = False
+        self.error_handler = ErrorHandler()
 
     def main(self) -> None:
         if len(sys.argv) > 2:
@@ -22,7 +23,7 @@ class Lox:
             src = file.read()
         self.run(src)
 
-        if self.had_error:
+        if self.error_handler.has_error:
             sys.exit(65)
 
     def run_prompt(self) -> None:
@@ -32,26 +33,14 @@ class Lox:
             if not line:
                 break
             self.run(line)
-            self.had_error = False
+            self.error_handler.has_error = False
 
     def run(self, src: str) -> None:
-        scanner = Scanner(src)
+        scanner = Scanner(src, self.error_handler)
         tokens = scanner.scan_tokens()
 
         for token in tokens:
             print(token)
-
-    """
-    Error Handling
-    """
-
-    @staticmethod
-    def error(line: int, message: str) -> None:
-        Lox.report(line, '', message)
-
-    @staticmethod
-    def report(line: int, where: str, message: str) -> None:
-        print(f'[line {line}] Error {where}: {str}')
 
 
 if __name__ == '__main__':

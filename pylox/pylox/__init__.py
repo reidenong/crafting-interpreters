@@ -1,5 +1,6 @@
 # pylox/__init__.py
 
+from .error_handler import ErrorHandler
 from .main import Lox
 from .scanner import Scanner
 from .token import Token

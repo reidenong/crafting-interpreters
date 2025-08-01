@@ -1,12 +1,14 @@
 # pylox/scanner.py
-from pylox import Lox, Token
-from pylox import TokenType as TT
-from pylox.token_type import CHAR_TOKEN_MAP, KEYWORD_TOKEN_MAP
+from .error_handler import ErrorHandler
+from .token import Token
+from .token_type import CHAR_TOKEN_MAP, KEYWORD_TOKEN_MAP
+from .token_type import TokenType as TT
 
 
 class Scanner:
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, error_handler: ErrorHandler) -> None:
         self.source = source
+        self.ehand = error_handler
         self.tokens: list[Token] = []
 
         self.start = 0
@@ -27,43 +29,69 @@ class Scanner:
 
     def scan_token(self) -> None:
         c = self.advance()
-        tt_or_map = CHAR_TOKEN_MAP.get(c)
 
-        if isinstance(tt_or_map, TT):
-            self.add_token(tt_or_map)
+        if c in CHAR_TOKEN_MAP:
+            self.add_token(CHAR_TOKEN_MAP[c])
             return
-
-        if isinstance(tt_or_map, dict):
-            for key in tt_or_map:
-                if self.match(key):
-                    self.add_token(tt_or_map[key])
-                    return
 
         # Individual cases
         match c:
+            case '!':
+                if self.match('='):
+                    self.add_token(TT.BANG_EQUAL)
+                else:
+                    self.add_token(TT.BANG)
+                return
+
+            case '=':
+                if self.match('='):
+                    self.add_token(TT.EQUAL_EQUAL)
+                else:
+                    self.add_token(TT.EQUAL)
+                return
+
+            case '<':
+                if self.match('='):
+                    self.add_token(TT.LESS_EQUAL)
+                else:
+                    self.add_token(TT.LESS)
+                return
+
+            case '>':
+                if self.match('='):
+                    self.add_token(TT.GREATER_EQUAL)
+                else:
+                    self.add_token(TT.GREATER)
+                return
+
             case '/':
                 if self.match('/'):
                     while self.peek() != '\n' and not self.is_at_end():
                         self.advance()
                 else:
                     self.add_token(TT.SLASH)
+                return
 
             case ' ' | '\r' | '\t':
-                pass
+                return
 
             case '\n':
                 self.line += 1
+                return
 
             case '"':
                 self.string()
+                return
 
             case _ if c.isdigit():
                 self.number()
+                return
 
             case _ if c.isalpha():
                 self.identifier()
+                return
 
-        Lox.error(self.line, 'Unexpected char.')
+        self.ehand.error(self.line, 'Unexpected char.')
 
     def identifier(self) -> None:
         while not self.is_at_end() and (
@@ -98,7 +126,7 @@ class Scanner:
             self.advance()
 
         if self.is_at_end():
-            Lox.error(self.line, 'Unterminated string.')
+            self.ehand.error(self.line, 'Unterminated string.')
             return
 
         self.advance()

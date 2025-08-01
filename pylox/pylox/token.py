@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pylox import TokenType
+from .token_type import TokenType
 
 
 @dataclass(frozen=True, slots=True)

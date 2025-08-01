@@ -60,7 +60,7 @@ class TokenType(StrEnum):
 # Maps single-character lexemes to their corresponding token types.
 # Used by the scanner to quickly recognize punctuation and operator tokens.
 TT = TokenType  # alias
-CHAR_TOKEN_MAP: Final[dict[str, TT | dict[str, TT]]] = {
+CHAR_TOKEN_MAP: Final[dict[str, TT]] = {
     # Single-character tokens
     '(': TT.LEFT_PAREN,
     ')': TT.RIGHT_PAREN,
@@ -73,11 +73,6 @@ CHAR_TOKEN_MAP: Final[dict[str, TT | dict[str, TT]]] = {
     ';': TT.SEMICOLON,
     '*': TT.STAR,
     '/': TT.SLASH,
-    # One or two character tokens (with optional '=' after the first char)
-    '!': {'=': TT.BANG_EQUAL, '': TT.BANG},
-    '=': {'=': TT.EQUAL_EQUAL, '': TT.EQUAL},
-    '<': {'=': TT.LESS_EQUAL, '': TT.LESS},
-    '>': {'=': TT.GREATER_EQUAL, '': TT.GREATER},
 }
 
 KEYWORD_TOKEN_MAP: Final[dict[str, TT]] = {
