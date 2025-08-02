@@ -36,4 +36,6 @@ Key terms:
     - Second: `accept()` calls the correct `visit_x_expr` on the visitor.
   
 - Some typing notes:
-  - 
+  - We use `abc.ABC` to for expression type `Expr` where explicit inheritance is intended.
+  - We use `typing.Protocol` for `Visitor` to enable duck typing and to keep things flexible.
+  - We also use `dataclasses.dataclass` for the `Expr` subclasses to reduce the boilerplate `__init__` needed otherwise, and also `frozen` enabled us to have immutability.
