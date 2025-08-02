@@ -49,8 +49,8 @@ T = TypeVar('T', covariant=True)\n
     """)
 
     sb.write(f'class {base_name}(ABC):')
-    sb.write('\t@abstractmethod')
-    sb.write('\tdef accept(self, visitor: Visitor[T]) -> T: ...')
+    sb.write('    @abstractmethod')
+    sb.write('    def accept(self, visitor: Visitor[T]) -> T: ...')
 
     # Write the visitor pattern.
     write_visitor(sb, base_name, defns)
@@ -64,7 +64,7 @@ T = TypeVar('T', covariant=True)\n
 
     # Write to file
     with open(base_path, 'w') as fp:
-        fp.write(sb.get_string())
+        fp.write(sb.get_string() + '\n')
 
 
 def write_visitor(sb: StringBuilder, base_name: str, defns: list[str]) -> None:
@@ -73,7 +73,7 @@ def write_visitor(sb: StringBuilder, base_name: str, defns: list[str]) -> None:
     for defn in defns:
         class_name = defn.split('-')[0].strip()
         sb.write(
-            f'\tdef visit_{class_name.lower()}_{base_name.lower()}(self, {base_name.lower()}: {class_name}) -> T: ...'
+            f'    def visit_{class_name.lower()}_{base_name.lower()}(self, {base_name.lower()}: {class_name}) -> T: ...'
         )
 
 
@@ -84,12 +84,12 @@ def write_class(
     sb.write(f'class {class_name}({base_name}):')
 
     for field in fields_str.split(','):
-        sb.write(f'\t{field.strip()}')
+        sb.write(f'    {field.strip()}')
 
     sb.write('')
-    sb.write('\tdef accept(self, visitor: Visitor[T]) -> T:')
+    sb.write('    def accept(self, visitor: Visitor[T]) -> T:')
     sb.write(
-        f'\t\treturn visitor.visit_{class_name.lower()}_{base_name.lower()}(self)'
+        f'        return visitor.visit_{class_name.lower()}_{base_name.lower()}(self)'
     )
 
 
