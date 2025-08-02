@@ -14,3 +14,4 @@ Key concepts:
 
 - In the `scan_token` method, we try to encapsulate the simpler cases with `dict` mappings, but resort to pattern matching with `match-case` for the more complicated cases.
 
+- Maximal Munch (longest match): we always match the longest possible token, eg. resolving `---a` as `-- -a` instead of `- --a`. Multiple tokens may begin with the same prefix, so we try to consume as many characters as possible that still make a valid token. It helps with correctness in misinterpreting longer tokens as multiple shorter ones, while helping the grammar and parsing to remain simple.
