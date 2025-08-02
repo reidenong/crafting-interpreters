@@ -15,3 +15,11 @@ Key concepts:
 - In the `scan_token` method, we try to encapsulate the simpler cases with `dict` mappings, but resort to pattern matching with `match-case` for the more complicated cases.
 
 - Maximal Munch (longest match): we always match the longest possible token, eg. resolving `---a` as `-- -a` instead of `- --a`. Multiple tokens may begin with the same prefix, so we try to consume as many characters as possible that still make a valid token. It helps with correctness in misinterpreting longer tokens as multiple shorter ones, while helping the grammar and parsing to remain simple.
+
+# Representing code
+Key terms:
+- Formal grammar: Using a set of atomic pieces as its 'alphabet', we define a (usually infinite) set of 'strings' that are in the grammar. Since these grammars have infinite valid strings, we define them using a set of rules, called productions as they produce strings in the grammar.
+- In a Context-free grammar, each rule can be applied regardless of what comes before or after (ie. independent of its surrounding symbols).
+- Each production in a context-free grammar has a head and a body. The head is a name and describes what the body generates. eg. (`unary → ( "!" | "-" ) unary | call ;`) 
+
+## Generating the AST

@@ -2,8 +2,8 @@
 
 
 class ErrorHandler:
-    def __init__(self):
-        self.has_error = False
+    def __init__(self) -> None:
+        self.has_error: bool = False
 
     def error(self, line: int, message: str) -> None:
         self.report(line, '', message)

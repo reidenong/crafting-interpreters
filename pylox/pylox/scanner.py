@@ -24,7 +24,7 @@ class Scanner:
         self.tokens.append(Token(TT.EOF, '', None, self.line))
         return self.tokens
 
-    def is_at_end(self):
+    def is_at_end(self) -> bool:
         return self.curr >= len(self.source)
 
     def scan_token(self) -> None:
