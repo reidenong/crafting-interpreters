@@ -39,3 +39,6 @@ Key terms:
   - We use `abc.ABC` to for expression type `Expr` where explicit inheritance is intended.
   - We use `typing.Protocol` for `Visitor` to enable duck typing and to keep things flexible.
   - We also use `dataclasses.dataclass` for the `Expr` subclasses to reduce the boilerplate `__init__` needed otherwise, and also `frozen` enabled us to have immutability.
+
+## Parsing
+- Pylox, like jlox implements a Recursive Descent Parser (top-down parser).
