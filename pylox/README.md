@@ -23,3 +23,17 @@ Key terms:
 - Each production in a context-free grammar has a head and a body. The head is a name and describes what the body generates. eg. (`unary → ( "!" | "-" ) unary | call ;`) 
 
 ## Generating the AST
+- Since each kind of expression in Lox behaves differently at runtime, the interpreter needs to select a different chunk of code to handle each expression type
+- We use the visitor pattern: The interpreter implements a visitor, and thus has `visit_x_expression` implemented. 
+  - If we have a `Expr` like `assignment: Expr = Assign(...)`
+  - We evaluate it like `result: Object = assignment.accept(interpreter)`
+  - Under the hood:
+    1. `assignment.accept(interpreter)`
+    2. We call `interpreter.visit_assign_expr(self)`
+    3. as `Interpreter` implements `Visitor`, it has a method `visit_assign_expr` that performs evaluation specific to Assign expressions
+  - This is a double dispatch:
+    - First: Runtime type of `Expr` determines which accept is called
+    - Second: `accept()` calls the correct `visit_x_expr` on the visitor.
+  
+- Some typing notes:
+  - 

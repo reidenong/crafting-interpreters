@@ -6,7 +6,7 @@ class StringBuilder:
     def __init__(self) -> None:
         self.parts: list[str] = []
 
-    def append(self, x: str) -> None:
+    def write(self, x: str) -> None:
         self.parts.append(x)
 
     def get_string(self) -> str:
@@ -35,8 +35,10 @@ def write_ast_node(output_dir: str, base_name: str, defns: list[str]) -> None:
     base_path = f'{output_dir}{base_name.lower()}.py'
     sb = StringBuilder()
 
-    sb.append(f'# {base_path}\n')
-    sb.append(""" 
+    sb.write(f'# {base_path}\n')
+    sb.write(""" 
+from __future__ import annotations # For forward references
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Protocol, TypeVar
@@ -46,27 +48,49 @@ from .lox_token import Token
 T = TypeVar('T', covariant=True)\n
     """)
 
-    sb.append(f'class {base_name}:')
-    sb.append('\tpass')
+    sb.write(f'class {base_name}(ABC):')
+    sb.write('\t@abstractmethod')
+    sb.write('\tdef accept(self, visitor: Visitor[T]) -> T: ...')
 
+    # Write the visitor pattern.
+    write_visitor(sb, base_name, defns)
+
+    # The AST classes.
     for defn in defns:
         class_name = defn.split('-')[0].strip()
         fields_str = defn.split('-')[1].strip()
-        sb.append('\n')
+        sb.write('\n')
         write_class(sb, base_name, class_name, fields_str)
 
+    # Write to file
     with open(base_path, 'w') as fp:
         fp.write(sb.get_string())
+
+
+def write_visitor(sb: StringBuilder, base_name: str, defns: list[str]) -> None:
+    sb.write('\n')
+    sb.write('class Visitor(Protocol[T]):')
+    for defn in defns:
+        class_name = defn.split('-')[0].strip()
+        sb.write(
+            f'\tdef visit_{class_name.lower()}_{base_name.lower()}(self, {base_name.lower()}: {class_name}) -> T: ...'
+        )
 
 
 def write_class(
     sb: StringBuilder, base_name: str, class_name: str, fields_str: str
 ) -> None:
-    sb.append('@dataclass(frozen=True)')
-    sb.append(f'class {class_name}({base_name}):')
+    sb.write('@dataclass(frozen=True)')
+    sb.write(f'class {class_name}({base_name}):')
 
     for field in fields_str.split(','):
-        sb.append(f'\t{field.strip()}')
+        sb.write(f'\t{field.strip()}')
+
+    sb.write('')
+    sb.write('\tdef accept(self, visitor: Visitor[T]) -> T:')
+    sb.write(
+        f'\t\treturn visitor.visit_{class_name.lower()}_{base_name.lower()}(self)'
+    )
 
 
 if __name__ == '__main__':
