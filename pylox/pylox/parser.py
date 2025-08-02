@@ -1,6 +1,6 @@
 # pylox/parser.py
 
-from __future__ import annotations
+from __future__ import annotations  # Allows forward references.
 
 from .error_handler import ErrorHandler
 from .expr import Binary, Expr, Grouping, Literal, Unary
