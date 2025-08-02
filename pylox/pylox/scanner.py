@@ -95,7 +95,7 @@ class Scanner:
 
     def identifier(self) -> None:
         while not self.is_at_end() and (
-            self.peek().isalpha() or self.peek() == '_'
+            self.peek().isalnum() or self.peek() == '_'
         ):
             self.advance()
 
