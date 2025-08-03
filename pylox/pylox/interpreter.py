@@ -1,5 +1,7 @@
 # pylox/interpreter.py
 
+from typing import cast
+
 from .error_handler import ErrorHandler
 from .expr import Binary, Expr, Grouping, Literal, Unary
 from .expr import Visitor as ExprVisitor
@@ -28,10 +30,12 @@ class Interpreter(ExprVisitor[object]):
         match expr.operator.token_type:
             case TT.MINUS:
                 self.check_number_operand(expr.operator, right)
-                return -float(right)
+                return -cast(float, right)
 
             case TT.BANG:
                 return not self.is_truthy(right)
+
+        return None  # Never reaches.
 
     def visit_binary_expr(self, expr: Binary) -> object:
         left = self.evaluate(expr.left)
@@ -40,13 +44,13 @@ class Interpreter(ExprVisitor[object]):
         match expr.operator.token_type:
             case TT.MINUS:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) - float(right)
+                return cast(float, left) - cast(float, right)
             case TT.SLASH:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) / float(right)
+                return cast(float, left) / cast(float, right)
             case TT.STAR:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) * float(right)
+                return cast(float, left) * cast(float, right)
             case TT.PLUS:
                 if isinstance(left, float) and isinstance(right, float):
                     return float(left) + float(right)
@@ -54,20 +58,22 @@ class Interpreter(ExprVisitor[object]):
                     return str(left) + str(right)
             case TT.GREATER:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) > float(right)
+                return cast(float, left) > cast(float, right)
             case TT.GREATER_EQUAL:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) >= float(right)
+                return cast(float, left) >= cast(float, right)
             case TT.LESS:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) < float(right)
+                return cast(float, left) < cast(float, right)
             case TT.LESS_EQUAL:
                 self.check_number_operand(expr.operator, left, right)
-                return float(left) <= float(right)
+                return cast(float, left) <= cast(float, right)
             case TT.BANG_EQUAL:
                 return left != right
             case TT.EQUAL_EQUAL:
                 return left == right
+
+        return None  # Never reaches
 
     """
     HELPER FUNCTIONS
