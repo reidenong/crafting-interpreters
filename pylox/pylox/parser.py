@@ -18,6 +18,12 @@ class Parser:
         self.curr = 0
         self.eh = eh
 
+    def parse(self) -> Expr:
+        try:
+            return self.expression()
+        except ParseError:
+            return None
+
     def expression(self) -> Expr:
         """
         expression → equality ;
