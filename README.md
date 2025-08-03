@@ -3,7 +3,8 @@
 Here are some implementations of the Lox language as described in [Crafting Interpreters](https://craftinginterpreters.com/).
 
 Lox is implemented in the following flavors:
-- jLox, a Tree walk interpreter of Lox implemented in Java.
+- jLox, a Tree walk interpreter of Lox implemented in Java. The canonical implementation as per the book.
+- pylox, similar to jlox but in Python. An exercise to writing pythonic, strictly (mypy strict) OO Python code. 
 
 # jLox
 Setup
