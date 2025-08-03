@@ -2,12 +2,18 @@
 import sys
 
 from pylox.error_handler import ErrorHandler
+from pylox.interpreter import Interpreter
+from pylox.parser import Parser
 from pylox.scanner import Scanner
 
 
 class Lox:
+    error_handler: ErrorHandler
+    interpreter: Interpreter
+
     def __init__(self) -> None:
         self.error_handler = ErrorHandler()
+        self.interpreter = Interpreter()
 
     def main(self) -> None:
         if len(sys.argv) > 2:
@@ -25,6 +31,8 @@ class Lox:
 
         if self.error_handler.has_error:
             sys.exit(65)
+        if self.error_handler.has_runtime_error:
+            sys.exit(70)
 
     def run_prompt(self) -> None:
         while True:
@@ -38,9 +46,13 @@ class Lox:
     def run(self, src: str) -> None:
         scanner = Scanner(src, self.error_handler)
         tokens = scanner.scan_tokens()
+        parser = Parser(tokens, self.error_handler)
+        expr = parser.parse()
 
-        for token in tokens:
-            print(token)
+        if self.error_handler.has_error or expr is None:
+            sys.exit(65)
+
+        self.interpreter.interpret(expr, self.error_handler)
 
 
 if __name__ == '__main__':

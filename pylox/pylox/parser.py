@@ -18,7 +18,7 @@ class Parser:
         self.curr = 0
         self.eh = eh
 
-    def parse(self) -> Expr:
+    def parse(self) -> Expr | None:
         try:
             return self.expression()
         except ParseError:
