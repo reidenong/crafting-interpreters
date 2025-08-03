@@ -105,3 +105,10 @@ Key terms:
    * printStmt → expression ";" ;
    * exprStmt → "print" expression ";" ;
 ```
+
+## Interpreting
+After building the AST, we need to evaluate the AST. This comes in two parts, and we achieve that by way of an interpreter.
+1. Expressions
+  - Given an expression, we want to evaluate it to some result (and possible with side effects).
+  - Our interpreter implements the Visitor Protocol, that is to say it is able to visit each of the different types of the AST nodes. Upon visiting a node, it evaluates its value and any of its associated side effects.
+2. Statements
