@@ -42,3 +42,66 @@ Key terms:
 
 ## Parsing
 - Pylox, like jlox implements a Recursive Descent Parser (top-down parser).
+- Our parser takes in a sequence of `Tokens` and uses the ordering to build a AST based off the Lox Grammar specification.
+- Our implementation is a stateful, single pass parser that maintains a reference to the current token we are at. We move down the Lox grammar, from expressions of lower precedence to those of higher precedence.
+```
+   * Expression Grammar
+   * ======================
+   *
+   * expression → assignment ;
+   * 
+   * assignment → (call ".")? IDENTIFIER "=" assignment | logic_or ;
+   * 
+   * logic_or → logic_and ("or" logic_and)* ;
+   * 
+   * logic_and → equality ("and" equality)* ;
+   * 
+   * equality → comparison ( ( "!=" | "==" ) comparison )* ;
+   * 
+   * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+   * 
+   * term → factor ( ( "-" | "+" ) factor )* ;
+   * 
+   * factor → unary ( ( "/" | "*" ) unary )* ;
+   * 
+   * unary → ( "!" | "-" ) unary | call ;
+   * 
+   * // Includes calls and property access
+   * call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
+   * arguments → expression ( "," expression )* ;
+   * 
+   * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+   * | IDENTIFIER | "super" "." IDENTIFIER;
+
+
+   * Statement Grammar
+   * ==================
+   * 
+   * program → declaration* EOF ;
+   * 
+   * declaration → classDecl | funDecl | varDecl | statement ;
+   * 
+   * statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt
+   * | block ;
+   * 
+   * block → "{" declaration* "}" ;
+   * 
+   * forStmt → "for" "(" ( varDecl | exprStmt | ";" )
+   * expression? ";"
+   * expression ")" statement ;
+   * 
+   * returnStmt → "return" expression? ";" ;
+   * 
+   * ifStmt → "if" "(" expression ")" statement ("else" statement)? ;
+   * 
+   * classDecl → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}";
+   * 
+   * funDecl → "fun" function ;
+   * function → IDENTIFIER "(" parameters? ")" block ;
+   * parameters → IDENTIFIER ( "," IDENTIFIER )* ;
+   * 
+   * varDecl → "var" IDENTIFIER ( "=" expression)? ";" ;
+   * 
+   * printStmt → expression ";" ;
+   * exprStmt → "print" expression ";" ;
+```
