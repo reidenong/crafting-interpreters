@@ -5,6 +5,7 @@ from __future__ import annotations  # Allows forward references.
 from .error_handler import ErrorHandler
 from .expr import Binary, Expr, Grouping, Literal, Unary
 from .lox_token import Token
+from .stmt import Expression, Print, Stmt
 from .token_type import TokenType as TT
 
 
@@ -18,11 +19,37 @@ class Parser:
         self.curr = 0
         self.eh = eh
 
-    def parse(self) -> Expr | None:
+    def parse(self) -> list[Stmt] | None:
+        statements = []
         try:
-            return self.expression()
+            while not self.is_at_end():
+                statements.append(self.statement())
         except ParseError:
             return None
+        return statements
+
+    """
+    PARSING STATEMENTS
+    """
+
+    def statement(self) -> Stmt:
+        if self.match(TT.PRINT):
+            return self.print_statement()
+        return self.expression_statement()
+
+    def print_statement(self) -> Stmt:
+        value = self.expression()
+        self.consume(TT.SEMICOLON, 'Expect ";" after value.')
+        return Print(value)
+
+    def expression_statement(self) -> Stmt:
+        value = self.expression()
+        self.consume(TT.SEMICOLON, 'Expect ";" after value.')
+        return Expression(value)
+
+    """
+    PARSING EXPRESSIONS
+    """
 
     def expression(self) -> Expr:
         """

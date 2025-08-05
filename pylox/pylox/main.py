@@ -47,12 +47,12 @@ class Lox:
         scanner = Scanner(src, self.error_handler)
         tokens = scanner.scan_tokens()
         parser = Parser(tokens, self.error_handler)
-        expr = parser.parse()
+        statements = parser.parse()
 
-        if self.error_handler.has_error or expr is None:
+        if self.error_handler.has_error or statements is None:
             sys.exit(65)
 
-        self.interpreter.interpret(expr, self.error_handler)
+        self.interpreter.interpret(statements, self.error_handler)
 
 
 if __name__ == '__main__':

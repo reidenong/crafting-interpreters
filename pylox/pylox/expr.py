@@ -1,17 +1,17 @@
 # pylox/expr.py
 
-
-from __future__ import annotations  # For forward references
+ 
+from __future__ import annotations # For forward references
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Protocol, TypeVar
-
+              
 from .lox_token import Token
-
+              
 T = TypeVar('T', covariant=True)
 
-
+    
 class Expr(ABC):
     @abstractmethod
     def accept(self, visitor: Visitor[T]) -> T: ...

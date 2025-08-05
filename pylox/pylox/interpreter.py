@@ -7,16 +7,36 @@ from .expr import Binary, Expr, Grouping, Literal, Unary
 from .expr import Visitor as ExprVisitor
 from .lox_runtime_error import LoxRuntimeError
 from .lox_token import Token
+from .stmt import Expression, Print, Stmt
+from .stmt import Visitor as StmtVisitor
 from .token_type import TokenType as TT
 
 
-class Interpreter(ExprVisitor[object]):
-    def interpret(self, expression: Expr, eh: ErrorHandler) -> None:
+class Interpreter(ExprVisitor[object], StmtVisitor[None]):
+    def interpret(self, statements: list[Stmt], eh: ErrorHandler) -> None:
         try:
-            value = self.evaluate(expression)
-            print(self.stringify(value))
+            for statement in statements:
+                self.execute(statement)
         except LoxRuntimeError as e:
             eh.runtime_error(e)
+
+    def execute(self, stmt: Stmt) -> None:
+        stmt.accept(self)
+
+    """
+    INTERPRET STATEMENTS
+    """
+
+    def visit_expression_stmt(self, stmt: Expression) -> None:
+        self.evaluate(stmt.expression)
+
+    def visit_print_stmt(self, stmt: Print) -> None:
+        value = self.evaluate(stmt.expression)
+        print(value)
+
+    """
+    INTERPRET EXPRESSIONS
+    """
 
     def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value

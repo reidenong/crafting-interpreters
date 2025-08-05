@@ -29,9 +29,17 @@ def main() -> None:
             'Unary - operator: Token, right: Expr',
         ],
     )
+    write_ast_node(
+        output_dir,
+        'Stmt',
+        ['Expression - expression: Expr', 'Print - expression: Expr'],
+        'from .expr import Expr\n',
+    )
 
 
-def write_ast_node(output_dir: str, base_name: str, defns: list[str]) -> None:
+def write_ast_node(
+    output_dir: str, base_name: str, defns: list[str], extra_headers: str = ''
+) -> None:
     base_path = f'{output_dir}{base_name.lower()}.py'
     sb = StringBuilder()
 
@@ -47,6 +55,9 @@ from .lox_token import Token
               
 T = TypeVar('T', covariant=True)\n
     """)
+
+    if extra_headers:
+        sb.write(extra_headers)
 
     sb.write(f'class {base_name}(ABC):')
     sb.write('    @abstractmethod')
