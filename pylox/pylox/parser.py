@@ -44,6 +44,7 @@ class Parser:
         self.consume(TT.SEMICOLON, 'Expect ";" after variable declaration.')
         return Var(name, initializer)
 
+    # TODO: FIX mypy annotations and control flow.
     def declaration(self) -> Stmt | None:
         """
         declaration → var_declaration | statement ;
