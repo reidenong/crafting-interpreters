@@ -3,9 +3,9 @@
 from __future__ import annotations  # Allows forward references.
 
 from .error_handler import ErrorHandler
-from .expr import Binary, Expr, Grouping, Literal, Unary
+from .expr import Binary, Expr, Grouping, Literal, Unary, Variable
 from .lox_token import Token
-from .stmt import Expression, Print, Stmt
+from .stmt import Expression, Print, Stmt, Var
 from .token_type import TokenType as TT
 
 
@@ -23,7 +23,7 @@ class Parser:
         statements = []
         try:
             while not self.is_at_end():
-                statements.append(self.statement())
+                statements.append(self.declaration())
         except ParseError:
             return None
         return statements
@@ -32,17 +32,50 @@ class Parser:
     PARSING STATEMENTS
     """
 
+    def var_declaration(self) -> Stmt:
+        """
+        var_declaration
+        """
+        name = self.consume(TT.IDENTIFIER, 'Expect variable name.')
+
+        initializer = None
+        if self.match(TT.EQUAL):
+            initializer = self.expression()
+        self.consume(TT.SEMICOLON, 'Expect ";" after variable declaration.')
+        return Var(name, initializer)
+
+    def declaration(self) -> Stmt | None:
+        """
+        declaration → var_declaration | statement ;
+        """
+        try:
+            if self.match(TT.VAR):
+                return self.var_declaration()
+            return self.statement()
+        except ParseError:
+            self.synchronize()
+        return None
+
     def statement(self) -> Stmt:
+        """
+        statement → print_statement | expression_statement() ;
+        """
         if self.match(TT.PRINT):
             return self.print_statement()
         return self.expression_statement()
 
     def print_statement(self) -> Stmt:
+        """
+        print_statement → "print" expression ";" ;
+        """
         value = self.expression()
         self.consume(TT.SEMICOLON, 'Expect ";" after value.')
         return Print(value)
 
     def expression_statement(self) -> Stmt:
+        """
+        expression_statement → expression ";" ;
+        """
         value = self.expression()
         self.consume(TT.SEMICOLON, 'Expect ";" after value.')
         return Expression(value)
@@ -122,7 +155,7 @@ class Parser:
 
     def primary(self) -> Expr:
         """
-        primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+        primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"  | IDENTIFIER;
         """
         if self.match(TT.FALSE):
             return Literal(False)
@@ -138,6 +171,9 @@ class Parser:
             expr: Expr = self.expression()
             self.consume(TT.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
+
+        if self.match(TT.IDENTIFIER):
+            return Variable(self.previous())
 
         raise self.error(self.peek(), 'Expect expression.')
 
@@ -181,6 +217,26 @@ class Parser:
 
     def previous(self) -> Token:
         return self.tokens[self.curr - 1]
+
+    def synchronize(self) -> None:
+        self.advance()
+
+        while not self.is_at_end():
+            if self.previous().token_type == TT.SEMICOLON:
+                return
+
+            if self.peek().token_type in [
+                TT.CLASS,
+                TT.FUN,
+                TT.VAR,
+                TT.FOR,
+                TT.IF,
+                TT.WHILE,
+                TT.PRINT,
+                TT.RETURN,
+            ]:
+                return
+            self.advance()
 
 
 class ParseError(RuntimeError):

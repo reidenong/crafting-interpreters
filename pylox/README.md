@@ -102,8 +102,8 @@ Key terms:
    * 
    * varDecl → "var" IDENTIFIER ( "=" expression)? ";" ;
    * 
-   * printStmt → expression ";" ;
-   * exprStmt → "print" expression ";" ;
+   * exprStmt → expression ";" ;
+   * printStmt → "print" expression ";" ;
 ```
 
 ## Interpreting
@@ -113,4 +113,4 @@ After building the AST, we need to evaluate the AST. This comes in two parts, an
   - Our interpreter implements the Visitor Protocol, that is to say it is able to visit each of the different types of the AST nodes. Upon visiting a node, it evaluates its value and any of its associated side effects.
 2. Statements
 - Statements dont evalute to a value, and instead produce side effects. We can easily create two straightforward statements and their implementations, the expression statement and the print statement.
-- 
+- There are also 'precedents' for statements, as some statements can fit within other statements. For example, we may want declaration statements to have the highest precedence so that they aren't nested into control flow like `if (some_value) var x = 5;`, where it is not clear where the scope begins and ends.

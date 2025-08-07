@@ -27,12 +27,17 @@ def main() -> None:
             'Grouping - expression: Expr',
             'Literal - value: object',
             'Unary - operator: Token, right: Expr',
+            'Variable - name: Token',  # Expression for accessing a variable
         ],
     )
     write_ast_node(
         output_dir,
         'Stmt',
-        ['Expression - expression: Expr', 'Print - expression: Expr'],
+        [
+            'Expression - expression: Expr',
+            'Print - expression: Expr',
+            'Var - name: Token, initializer: Expr',  # Statement for declaring a variable.
+        ],
         'from .expr import Expr\n',
     )
 

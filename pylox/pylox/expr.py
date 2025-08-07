@@ -22,6 +22,7 @@ class Visitor(Protocol[T]):
     def visit_grouping_expr(self, expr: Grouping) -> T: ...
     def visit_literal_expr(self, expr: Literal) -> T: ...
     def visit_unary_expr(self, expr: Unary) -> T: ...
+    def visit_variable_expr(self, expr: Variable) -> T: ...
 
 
 @dataclass(frozen=True)
@@ -57,3 +58,11 @@ class Unary(Expr):
 
     def accept(self, visitor: Visitor[T]) -> T:
         return visitor.visit_unary_expr(self)
+
+
+@dataclass(frozen=True)
+class Variable(Expr):
+    name: Token
+
+    def accept(self, visitor: Visitor[T]) -> T:
+        return visitor.visit_variable_expr(self)
