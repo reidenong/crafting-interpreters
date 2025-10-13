@@ -1,3 +1,5 @@
 /build
+**/build/
 *.class
 *_cache
+*.o
