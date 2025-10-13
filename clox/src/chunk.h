@@ -12,16 +12,18 @@
  * Defines what kind of instruction we are dealing with.
  */
 typedef enum {
-    OP_RETURN,  // Return from the current function
+    OP_CONSTANT,  // Produce a particular constant
+    OP_RETURN,    // Return from the current function
 } OpCode;
 
 /*
- * Defines a series of instructi ons.
+ * Defines a series of instructions.
  */
 typedef struct {
     int count;
     int capacity;
     uint8_t* code;
+    int* lines;  // Store the respective line numbers
     ValueArray constants;
 } Chunk;
 
@@ -32,9 +34,9 @@ void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 
 // Append a byte to the end of the chunk
-void writeChunk(Chunk* chunk, uint8_t byte);
+void writeChunk(Chunk* chunk, uint8_t byte, int line);
 
 // Add a constant to the chunk's valuearray
-void addConstant(Chunk* chunk, Value value);
+int addConstant(Chunk* chunk, Value value);
 
 #endif
