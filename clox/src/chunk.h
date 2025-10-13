@@ -35,9 +35,6 @@ void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte);
 
 // Add a constant to the chunk's valuearray
-void addConstant(Chunk* chunk, Value value) {
-    writeValueArray(&chunk->constants, value);
-    return chunk->constants.count - 1;  // return its index for later lookup
-}
+void addConstant(Chunk* chunk, Value value);
 
 #endif
