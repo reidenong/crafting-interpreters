@@ -14,7 +14,11 @@
 typedef enum {
     OP_CONSTANT,  // Produce a particular constant
     OP_NEGATE,    // -x
-    OP_RETURN,    // Return from the current function
+    OP_ADD,
+    OP_SUBTRACT,
+    OP_MULTIPLY,
+    OP_DIVIDE,
+    OP_RETURN,  // Return from the current function
 } OpCode;
 
 /*
