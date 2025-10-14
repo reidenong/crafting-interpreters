@@ -7,7 +7,25 @@
 
 VM vm;
 
-void initVM() {};
+/*
+ * Helper functions to manage the vm's value stack
+ */
+static void resetStack() { vm.stackTop = vm.stack; }
+
+void push(Value value) {
+    *vm.stackTop = value;
+    vm.stackTop++;
+}
+
+Value pop() {
+    vm.stackTop--;
+    return *vm.stackTop;
+}
+
+/*
+ * Functions to manage the vm
+ */
+void initVM() { resetStack(); };
 
 void freeVM() {};
 
@@ -23,6 +41,16 @@ static InterpretResult run() {
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
+        /*
+         * Stack tracing for debugging, print each value in the stack
+         */
+        printf("        ");
+        for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+            printf("[ ");
+            printValue(*slot);
+            printf(" ]");
+        }
+        printf("\n");
         disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
 
@@ -30,11 +58,15 @@ static InterpretResult run() {
         switch (instruction = READ_BYTE()) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
-                printValue(constant);
-                printf("\n");
+                push(constant);
                 break;
             }
+            case OP_NEGATE:
+                push(-pop());
+                break;
             case OP_RETURN: {
+                printValue(pop());
+                printf("\n");
                 return INTERPRET_OK;
             }
         }
