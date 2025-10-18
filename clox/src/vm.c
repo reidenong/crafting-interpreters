@@ -104,7 +104,29 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
+/*
+ * Interpret the user's source code.
+ *
+ * This comes in several steps:
+ * 1. Create a empty chunk, and fill the chunk with bytecode with compile()
+ * 2. Interpret the chunk with the virtual machine
+ * 3. Return the result.
+ */
 InterpretResult interpret(const char* source) {
-    compile(source);
-    return INTERPRET_OK;
+    Chunk chunk;
+    initChunk(&chunk);
+
+    // Check for a compilation error
+    if (!compile(source, &chunk)) {
+        freeChunk(&chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+
+    InterpretResult result = run();
+
+    freeChunk(&chunk);
+    return result;
 }
