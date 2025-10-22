@@ -18,6 +18,47 @@ typedef struct {
     bool panicMode;  // Prevents error cascades.
 } Parser;
 
+/*
+ * Defines the precedence of several operations
+ *
+ * When we parse at a low level of precedence, we may include items of higher
+ * precedence.
+ *
+ * Conversely, when we parse at a higher level of precedence, we don't include
+ * items of higher precedence, and stop there
+ *
+ * This allows us to correctly parse expressions like "-a.b + c" into -(a.b) + c
+ * as it just parses the -a.b and stops there instead of consuming the entire
+ * expression
+ */
+typedef enum {
+    PREC_NONE,
+    PREC_ASSIGNMENT,  // =
+    PREC_OR,          // or
+    PREC_AND,         // and
+    PREC_EQUALITY,    // == !=
+    PREC_COMPARISON,  // < > <= >=
+    PREC_TERM,        // + -
+    PREC_FACTOR,      // * /
+    PREC_UNARY,       // ! -
+    PREC_CALL,        // . ()
+    PREC_PRIMARY
+} Precedence;
+
+/*
+ * Defines the core lookup table for the Pratt parser.
+ *
+ * Tells the parser how to handle each token type in an expression, depending on
+ * where that token appears and what its operator precedence is.
+ */
+typedef void (*ParseFn)();  // Function pointer for parsing functions
+
+typedef struct {
+    ParseFn prefix;  // Function to call if the token appears at the start
+    ParseFn infix;  // Function to call if the token appears between expressions
+    Precedence precedence;
+} ParseRule;
+
 Parser parser;          // Single global variable to avoid passing it around.
 Chunk* compilingChunk;  // Global chunk pointer.
 
@@ -107,6 +148,88 @@ static void emitReturn() { emitByte(OP_RETURN); }
 
 static void endCompiler() { emitReturn(); }
 
+// Forward declarations.
+static void expression();
+static ParseRule* getRule(TokenType type);
+static void parsePrecedence(Precedence precedence);
+
+/*
+ * Compiles a binary expression.
+ */
+static void binary() {
+    // Based on the operatorType, we determine which precedence we should
+    // continue at
+    TokenType operatorType = parser.previous.type;
+    ParseRule* rule = getRule(operatorType);
+    parsePrecedence((Precedence)(rule->precedence + 1));
+
+    switch (operatorType) {
+        case TOKEN_PLUS:
+            emitByte(OP_ADD);
+            break;
+        case TOKEN_MINUS:
+            emitByte(OP_SUBTRACT);
+            break;
+        case TOKEN_STAR:
+            emitByte(OP_MULTIPLY);
+            break;
+        case TOKEN_SLASH:
+            emitByte(OP_DIVIDE);
+            break;
+        default:
+            return;
+    }
+}
+
+/*
+ * Pratt Parsing table
+ *
+ * Tells us the respective parsing function to call when we encounter a specific
+ * type of token, as well as its precedence.
+ */
+ParseRule rules[] = {
+    [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
+    [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
+    [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
+    [TOKEN_DOT] = {NULL, NULL, PREC_NONE},
+    [TOKEN_MINUS] = {unary, binary, PREC_TERM},
+    [TOKEN_PLUS] = {NULL, binary, PREC_TERM},
+    [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
+    [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
+    [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
+    [TOKEN_BANG] = {NULL, NULL, PREC_NONE},
+    [TOKEN_BANG_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_EQUAL_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_GREATER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_GREATER_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_LESS] = {NULL, NULL, PREC_NONE},
+    [TOKEN_LESS_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_STRING] = {NULL, NULL, PREC_NONE},
+    [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
+    [TOKEN_AND] = {NULL, NULL, PREC_NONE},
+    [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
+    [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_FALSE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_FOR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
+    [TOKEN_IF] = {NULL, NULL, PREC_NONE},
+    [TOKEN_NIL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_OR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
+    [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
+    [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_THIS] = {NULL, NULL, PREC_NONE},
+    [TOKEN_TRUE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
+};
+
 /*
  * Compiles an unary expression.
  */
@@ -114,7 +237,8 @@ static void unary() {
     TokenType operatorType = parser.previous.type;
 
     // Compile the operand.
-    expression();
+    parsePrecedence(PREC_UNARY);
+    // we parse at the same level of precedence to allow things like !!x
 
     // Emit the operator instruction.
     switch (operatorType) {
@@ -125,6 +249,37 @@ static void unary() {
             return;  // Unreachable;
     }
 }
+
+/*
+ * The core recursive engine of the Pratt parser.
+ *
+ * Parses an expression whose operators have at least the given precedence
+ * level.
+ *
+ * This ensures that higher-precedence operators bind tighter than
+ * lower-precedence ones. It reads an expression via a prefix rule, then
+ * repeatedly consumes infix operators as long as they are strong enough to take
+ * the current expression as their left operand.
+ */
+static void parsePrecedence(Precedence precedence) {
+    advance();
+
+    // Handles prefix operators and literals
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+    if (prefixRule == NULL) {
+        error("Expect expression.");
+        return;
+    }
+
+    prefixRule();
+    while (precedence <= getRule(parser.current.type)->precedence) {
+        advance();
+        ParseFn infixRule = getRule(parser.previous.type)->infix;
+        infixRule();
+    }
+}
+
+static ParseRule* getRule(TokenType type) { return &rules[type]; }
 
 /*
  * Compiles a grouping expression.
@@ -145,7 +300,7 @@ static void number() {
     emitConstant(value);
 }
 
-static void expression() {}
+static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
