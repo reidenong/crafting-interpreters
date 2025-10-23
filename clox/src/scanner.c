@@ -15,6 +15,8 @@ typedef struct {
     int line;
 } Scanner;
 
+Scanner scanner;
+
 void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
@@ -232,4 +234,3 @@ Token scanToken() {
     return errorToken("Unexpected character.");
 }
 
-Scanner scanner;

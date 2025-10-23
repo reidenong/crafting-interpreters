@@ -88,6 +88,10 @@ static void errorAt(Token* token, const char* message) {
     parser.hadError = true;
 }
 
+static void error(const char* message) {
+  errorAt(&parser.previous, message);
+}
+
 static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
 }
@@ -153,7 +157,7 @@ static void emitReturn() { emitByte(OP_RETURN); }
 static void endCompiler() {
     emitReturn();
 
-    #ifdef DEBUG_PRINT_CODE
+    #ifdef DEBUG_PRINT_CODEg
     /*
      * If our code compiles successfully, we can print the chunk in debug mode.
      */
@@ -194,6 +198,75 @@ static void binary() {
         default:
             return;
     }
+}
+
+/*
+* Compiles an unary expression.
+*/
+static void unary() {
+    TokenType operatorType = parser.previous.type;
+
+    // Compile the operand.
+    parsePrecedence(PREC_UNARY);
+    // we parse at the same level of precedence to allow things like !!x
+
+    // Emit the operator instruction.
+    switch (operatorType) {
+        case TOKEN_MINUS:
+            emitByte(OP_NEGATE);
+            break;
+        default:
+            return;  // Unreachable;
+    }
+}
+
+/*
+ * The core recursive engine of the Pratt parser.
+ *
+ * Parses an expression whose operators have at least the given precedence
+ * level.
+ *
+ * This ensures that higher-precedence operators bind tighter than
+ * lower-precedence ones. It reads an expression via a prefix rule, then
+ * repeatedly consumes infix operators as long as they are strong enough to take
+ * the current expression as their left operand.
+ */
+static void parsePrecedence(Precedence precedence) {
+    advance();
+
+    // Handles prefix operators and literals
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+    if (prefixRule == NULL) {
+        error("Expect expression.");
+        return;
+    }
+
+    prefixRule();
+    while (precedence <= getRule(parser.current.type)->precedence) {
+        advance();
+        ParseFn infixRule = getRule(parser.previous.type)->infix;
+        infixRule();
+    }
+}
+
+
+/*
+ * Compiles a grouping expression.
+ */
+static void grouping() {
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+    // assume open bracket has been consumed
+}
+
+/*
+ * Compiles a number literal.
+ */
+static void number() {
+    double value = strtod(parser.previous.start, NULL);
+    // strtod: string to double, stops automatically when it reaches the first
+    // non-numeric character
+    emitConstant(value);
 }
 
 /*
@@ -245,75 +318,7 @@ ParseRule rules[] = {
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };
 
-/*
- * Compiles an unary expression.
- */
-static void unary() {
-    TokenType operatorType = parser.previous.type;
-
-    // Compile the operand.
-    parsePrecedence(PREC_UNARY);
-    // we parse at the same level of precedence to allow things like !!x
-
-    // Emit the operator instruction.
-    switch (operatorType) {
-        case TOKEN_MINUS:
-            emitByte(OP_NEGATE);
-            break;
-        default:
-            return;  // Unreachable;
-    }
-}
-
-/*
- * The core recursive engine of the Pratt parser.
- *
- * Parses an expression whose operators have at least the given precedence
- * level.
- *
- * This ensures that higher-precedence operators bind tighter than
- * lower-precedence ones. It reads an expression via a prefix rule, then
- * repeatedly consumes infix operators as long as they are strong enough to take
- * the current expression as their left operand.
- */
-static void parsePrecedence(Precedence precedence) {
-    advance();
-
-    // Handles prefix operators and literals
-    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-    if (prefixRule == NULL) {
-        error("Expect expression.");
-        return;
-    }
-
-    prefixRule();
-    while (precedence <= getRule(parser.current.type)->precedence) {
-        advance();
-        ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule();
-    }
-}
-
 static ParseRule* getRule(TokenType type) { return &rules[type]; }
-
-/*
- * Compiles a grouping expression.
- */
-static void grouping() {
-    expression();
-    consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
-    // assume open bracket has been consumed
-}
-
-/*
- * Compiles a number literal.
- */
-static void number() {
-    double value = strtod(parser.previous.start, NULL);
-    // strtod: string to double, stops automatically when it reaches the first
-    // non-numeric character
-    emitConstant(value);
-}
 
 static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
