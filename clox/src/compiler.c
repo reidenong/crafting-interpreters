@@ -88,9 +88,7 @@ static void errorAt(Token* token, const char* message) {
     parser.hadError = true;
 }
 
-static void error(const char* message) {
-  errorAt(&parser.previous, message);
-}
+static void error(const char* message) { errorAt(&parser.previous, message); }
 
 static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
@@ -157,14 +155,14 @@ static void emitReturn() { emitByte(OP_RETURN); }
 static void endCompiler() {
     emitReturn();
 
-    #ifdef DEBUG_PRINT_CODEg
+#ifdef DEBUG_PRINT_CODEg
     /*
      * If our code compiles successfully, we can print the chunk in debug mode.
      */
     if (!parser.hadError) {
         disassembleChunk(currentChunk(), "code");
     }
-    #endif
+#endif
 }
 
 // Forward declarations.
@@ -201,8 +199,8 @@ static void binary() {
 }
 
 /*
-* Compiles an unary expression.
-*/
+ * Compiles an unary expression.
+ */
 static void unary() {
     TokenType operatorType = parser.previous.type;
 
@@ -248,7 +246,6 @@ static void parsePrecedence(Precedence precedence) {
         infixRule();
     }
 }
-
 
 /*
  * Compiles a grouping expression.
