@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include "vm.h"
+
 /*
  * Handles (all) dynamic memory allocation for clox
  */
@@ -19,4 +21,29 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
     if (result == NULL) exit(1);  // In case not enough space
     return result;
+}
+
+/*
+ * Free the global object list for the vm.
+ *
+ * Traverse the global object list, free it, then move on to the next one.
+ */
+static void freeObject(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            FREE_ARRAY(char, string->chars, string->length + 1);
+            FREE(ObjString, object);
+            break;
+        }
+    }
+}
+
+void freeObjects() {
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        freeObject(object);
+        object = next;
+    }
 }

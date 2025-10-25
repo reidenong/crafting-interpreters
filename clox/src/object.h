@@ -8,7 +8,7 @@
 
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 
-#define AS_STRING(value) ((ObjString * AS_OBJ(value)))
+#define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
 typedef enum {
@@ -17,6 +17,7 @@ typedef enum {
 
 struct Obj {
     ObjType type;
+    struct Obj* next;  // a linked list to point to the next object
 };
 
 struct ObjString {
@@ -24,6 +25,11 @@ struct ObjString {
     int length;
     char* chars;
 };
+
+// Function declarations.
+ObjString* takeString(char* chars, int length);
+ObjString* copyString(const char* chars, int length);
+void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

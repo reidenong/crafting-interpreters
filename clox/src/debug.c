@@ -68,6 +68,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_MULTIPLY", offset);
         case OP_DIVIDE:
             return simpleInstruction("OP_DIVIDE", offset);
+        case OP_NOT:
+            return simpleInstruction("OP_NOT", offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:
@@ -75,5 +77,3 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return offset + 1;
     }
 }
-
-// ENDED AT CONSTANTS 14.5
