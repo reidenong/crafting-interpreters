@@ -20,10 +20,14 @@ struct Obj {
     struct Obj* next;  // a linked list to point to the next object
 };
 
+/*
+ * A clox string object. Immutable.
+ */
 struct ObjString {
     Obj obj;
     int length;
     char* chars;
+    uint32_t hash;
 };
 
 // Function declarations.

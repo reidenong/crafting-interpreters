@@ -35,28 +35,43 @@ static Obj* allocateObject(size_t size, ObjType type) {
  *
  * Creates a new ObjString in the heap and then initializes its fields.
  */
-static ObjString* allocateString(char* chars, int length) {
+static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
     string->chars = chars;
+    string->hash = hash;
     return string;
+}
+
+/*
+ * Implements the FNV-1a hashing algorithm.
+ */
+static uint32_t hashString(const char* key, int length) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
 }
 
 /*
  * Claims ownership of the string chars given.
  */
 ObjString* takeString(char* chars, int length) {
-    return allocateString(chars, length);
+    uint32_t hash = hashString(chars, length);
+    return allocateString(chars, length, hash);
 }
 
 /*
  * Takes a C string and creates a new clox string object.
  */
 ObjString* copyString(const char* chars, int length) {
-    char* heapChars = ALLOCATE(char, length + 1);  // create a new C string
-    memcpy(heapChars, chars, length);              // copy contents
-    heapChars[length] = '\0';                      // terminate
-    return allocateString(heapChars, length);      // create the clox string
+    uint32_t hash = hashString(chars, length);
+    char* heapChars = ALLOCATE(char, length + 1);    // create a new C string
+    memcpy(heapChars, chars, length);                // copy contents
+    heapChars[length] = '\0';                        // terminate
+    return allocateString(heapChars, length, hash);  // create the clox string
 }
 
 /*

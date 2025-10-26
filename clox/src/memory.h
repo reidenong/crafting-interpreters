@@ -9,7 +9,11 @@
 #include "object.h"
 
 /*
- * Allocates an array with a given element type and count.
+ * Functions to help memory management in clox.
+ *
+ * reallocate(void* pointer, size_t oldSize, size_t newSize);
+ * - if newSize is 0, we free memory
+ * - otherwise we allocate newSize memory to existing pointer or to a new one.
  */
 #define ALLOCATE(type, count) (type*)reallocate(NULL, 0, sizeof(type) * (count))
 
