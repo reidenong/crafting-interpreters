@@ -121,7 +121,7 @@ bool tableSet(Table* table, ObjString* key, Value value) {
 /*
  * Implements deletion in a table with tombstones.
  */
-void tableDelete(Table* table, ObjString* key) {
+bool tableDelete(Table* table, ObjString* key) {
     if (table->count == 0) return false;
 
     // Find the entry
