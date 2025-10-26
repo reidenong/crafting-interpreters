@@ -142,3 +142,27 @@ void tableAddAll(Table* from, Table* to) {
         }
     }
 }
+
+/*
+ * Look for a string in a hash table.
+ */
+ObjString* tableFindString(Table* table, const char* chars, int length,
+                           uint32_t hash) {
+    if (table->count == 0) return NULL;
+
+    uint32_t index = hash % table->capacity;
+    for (;;) {
+        Entry* entry = &table->entries[index];
+        if (entry->key == NULL) {  // Stop if we find a truly empty spot.
+            if (IS_NIL(entry->value)) return NULL;
+        } else if (entry->key->length == length && entry->key->hash == hash &&
+                   memcmp(entry->key->chars, chars, length) == 0) {
+            // Only place in the vm where we check for string equality, after
+            // interning as long as the strings are in two different locations
+            // they are different strings.
+            return entry->key;
+        }
+
+        index = (index + 1) % table->capacity;
+    }
+}

@@ -67,9 +67,15 @@ static void concatenate() {
 /*
  * Functions to manage the vm
  */
-void initVM() { resetStack(); };
+void initVM() {
+    resetStack();
+    initTable(&vm.strings);
+};
 
-void freeVM() { freeObjects(); };
+void freeVM() {
+    freeTable(&vm.strings);
+    freeObjects();
+};
 
 /*
  * Runs the virtual machine
