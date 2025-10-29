@@ -69,11 +69,13 @@ static void concatenate() {
  */
 void initVM() {
     resetStack();
+    initTable(&vm.globals);
     initTable(&vm.strings);
 };
 
 void freeVM() {
     freeTable(&vm.strings);
+    freeTable(&vm.globals);
     freeObjects();
 };
 
@@ -87,6 +89,9 @@ static InterpretResult run() {
 
 // Reads an index from bytecode and looks up the constant table
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+
+// Reads a String from the constant table.
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 
 // Carries out a binary operation
 // operators in C are not first class, but here the preprocessor is
@@ -139,6 +144,42 @@ static InterpretResult run() {
             case OP_POP:
                 pop();
                 break;
+            case OP_GET_GLOBAL: {  // Push value of a global variable to stack
+                ObjString* name = READ_STRING();
+                Value value;
+                if (!tableGet(&vm.globals, name, &value)) {
+                    runtimeError("Undefined variable '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                push(value);
+                break;
+            }
+            case OP_DEFINE_GLOBAL: {
+                ObjString* name = READ_STRING();
+                tableSet(&vm.globals, name, peek(0));
+                pop();
+                /*
+                 * Dont't pop the value until after adding to the hash table, so
+                 * that the VM can still find the value if a garbage collection
+                 * is triggered in the middle of adding it to the hash table.
+                 */
+                break;
+            }
+            case OP_SET_GLOBAL: {
+                /*
+                 * Note: setting variable dosen't pop the value off the stack,
+                 * for example nested assignment
+                 */
+                ObjString* name = READ_STRING();
+                // If variable hasn't been defined, we cant assign.
+                // No implicit variable declaration in Lox.
+                if (tableSet(&vm.globals, name, peek(0))) {
+                    tableDelete(&vm.globals, name);
+                    runtimeError("Undefined variable '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_EQUAL: {
                 Value b = pop();
                 Value a = pop();
@@ -197,6 +238,7 @@ static InterpretResult run() {
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 

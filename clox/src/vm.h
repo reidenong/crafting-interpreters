@@ -11,6 +11,7 @@ typedef struct {
     uint8_t* ip;  // Instruction pointer, points to the next instruction
     Value stack[STACK_MAX];
     Value* stackTop;  // Points to past the last element
+    Table globals;    // Global variables
     Table strings;    // For string interning
     Obj* objects;     // Points to the list of all objects
 } VM;
