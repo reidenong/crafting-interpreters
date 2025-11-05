@@ -167,6 +167,20 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
 }
 
 /*
+ * Compiles a loop (An easy way to jump from current position to a given
+ * loopStart)
+ */
+static void emitLoop(int loopStart) {
+    emitByte(OP_LOOP);
+
+    int offset = currentChunk()->count - loopStart + 2;
+    if (offset > UINT16_MAX) error("Loop body too large.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
+/*
  * Emit a jump instruction and a placeholder for the actual number of
  * instructions we want to jump
  */
@@ -646,6 +660,66 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void forStatement() {
+    beginScope();
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+
+    // Initializer clause
+    if (match(TOKEN_SEMICOLON)) {
+        // No initializer.
+    } else if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        expressionStatement();
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';'.");
+
+    // Condition clause
+    int loopStart = currentChunk()->count;
+    int exitJump = -1;
+    if (!match(TOKEN_SEMICOLON)) {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+        // Jump out of loop if condition (currently on the top of vm) is false
+        exitJump = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);  // Condition
+    }
+
+    /*
+     * The increment clause appears in source code before the body, but executes
+     * after it
+     *
+     * We can't compile the clause later since our compiler is only a single
+     * pass, so we jump over the increment, run the body, jump back to the
+     * increment, run it, and then go to the next iteration.
+     */
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        int bodyJump = emitJump(OP_JUMP);
+        int incrementStart = currentChunk()->count;
+        expression();
+        emitByte(OP_POP);  // We only need the side effect of the expression, so
+                           // pop the value
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        emitLoop(loopStart);
+        loopStart = incrementStart;
+        patchJump(bodyJump);
+    }
+
+    statement();
+    emitLoop(loopStart);
+
+    // Condition exists, this is not an infinite loop.
+    if (exitJump != -1) {
+        patchJump(exitJump);
+        emitByte(OP_POP);  // pop the Condition at top of vm
+    }
+
+    endScope();
+}
+
 /*
  * Compiles a if statement.
  */
@@ -682,8 +756,14 @@ static void printStatement() {
 
 /*
  * Compiles a 'while' statement.
+ *
+ * At the start we record the instruction pointer as loopStart. The while loop
+ * then does a 'if'statement check, then either jumps to the exit point or
+ * jumpst to loopStart, where we start compiling the loop again with
+ * expression();
  */
 static void whileStatement() {
+    int loopStart = currentChunk()->count;
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
@@ -691,6 +771,7 @@ static void whileStatement() {
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
     statement();
+    emitLoop(loopStart);
 
     patchJump(exitJump);
     emitByte(OP_POP);
@@ -748,6 +829,8 @@ static void declaration() {
 static void statement() {
     if (match(TOKEN_PRINT)) {  // print statement
         printStatement();
+    } else if (match(TOKEN_FOR)) {
+        forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
