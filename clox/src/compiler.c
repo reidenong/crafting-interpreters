@@ -167,6 +167,30 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
 }
 
 /*
+ * Emit a jump instruction and a placeholder for the actual number of
+ * instructions we want to jump
+ */
+static int emitJump(uint8_t instruction) {
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->count - 2;
+}
+
+static void patchJump(int offset) {
+    // -2 to offset for the bytecode for the jump offset.
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    // Replace the previous placeholder with the true instruction offset
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+/*
  * Add constant to current chunk's value array and return the index.
  */
 static uint8_t makeConstant(Value value) {
@@ -446,6 +470,22 @@ static void defineVariable(uint8_t global) {
 }
 
 /*
+ * Implements short circuiting for 'and'.
+ *
+ * When this is called, the left side of the expresion has been compiled and the
+ * value is at the top of the stack. Then if the value is falsey, we can just
+ * perform a jump to skip the right side of the expression.
+ */
+static void and_(bool canAssign) {
+    int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    parsePrecedence(PREC_AND);
+
+    patchJump(endJump);
+}
+
+/*
  * Compiles a grouping expression.
  */
 static void grouping(bool canAssign) {
@@ -462,6 +502,24 @@ static void number(bool canAssign) {
     // strtod: string to double, stops automatically when it reaches the first
     // non-numeric character
     emitConstant(NUMBER_VAL(value));
+}
+
+/*
+ * Implement short circuiting for 'or'.
+ *
+ * When left side of the expression is falsey, we jump over the next statement,
+ * which is actually a unconditional jump to the end of theend of the
+ * expression.
+ */
+static void or_(bool canAssign) {
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump);
+    emitByte(OP_POP);
+
+    parsePrecedence(PREC_OR);
+    patchJump(endJump);
 }
 
 /*
@@ -530,7 +588,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
-    [TOKEN_AND] = {NULL, NULL, PREC_NONE},
+    [TOKEN_AND] = {NULL, and_, PREC_AND},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
     [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
@@ -538,7 +596,7 @@ ParseRule rules[] = {
     [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
     [TOKEN_IF] = {NULL, NULL, PREC_NONE},
     [TOKEN_NIL] = {literal, NULL, PREC_NONE},
-    [TOKEN_OR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_OR] = {NULL, or_, PREC_OR},
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
     [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
@@ -588,10 +646,54 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+/*
+ * Compiles a if statement.
+ */
+static void ifStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    /*
+     * We need to know how far to jump, ie. how many instructions to skip. But
+     * to do that we need to have compiled the statement.
+     *
+     * Solution:  (backpatching) put a jump marker first, compile the
+     * statement, and then go back to replace the placeholder offset with the
+     * real number of instructions.
+     */
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);  // Pop the condition value from vm
+    statement();
+
+    int elseJump = emitJump(OP_JUMP);
+    patchJump(thenJump);
+    emitByte(OP_POP);  // Pop the condition value from vm
+
+    if (match(TOKEN_ELSE)) statement();
+    patchJump(elseJump);
+}
+
 static void printStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     emitByte(OP_PRINT);
+}
+
+/*
+ * Compiles a 'while' statement.
+ */
+static void whileStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    statement();
+
+    patchJump(exitJump);
+    emitByte(OP_POP);
 }
 
 /*
@@ -646,6 +748,10 @@ static void declaration() {
 static void statement() {
     if (match(TOKEN_PRINT)) {  // print statement
         printStatement();
+    } else if (match(TOKEN_IF)) {
+        ifStatement();
+    } else if (match(TOKEN_WHILE)) {
+        whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {  // block statement
         beginScope();
         block();
